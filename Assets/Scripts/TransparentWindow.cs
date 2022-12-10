@@ -50,18 +50,21 @@ public class TransparentWindow : MonoBehaviour
         DwmExtendFrameIntoClientArea(hWnd, ref margins);
         SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED | WS_EX_TRANSPARENT);
         SetWindowPos(hWnd, HWND_TOPMOST, 0,0,0,0,0);
-    #endif
         Application.runInBackground = true;
+    #endif
     }
 
     private void Update()
     {
+#if !UNITY_EDITOR
         Ray ray = main.ScreenPointToRay(Input.mousePosition);
         SetClickThrough(!Physics2D.Raycast(ray.origin, ray.direction));
+#endif
     }
     
     private void SetClickThrough(bool clickThrough)
     {
+#if !UNITY_EDITOR
         if (clickThrough)
         {
             SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED | WS_EX_TRANSPARENT);
@@ -70,5 +73,6 @@ public class TransparentWindow : MonoBehaviour
         {
             SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED);
         }
+#endif
     }
 }
