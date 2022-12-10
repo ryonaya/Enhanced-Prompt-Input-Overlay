@@ -6,7 +6,7 @@ namespace Util
 {
     [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
-    public class MatchWidth : MonoBehaviour {
+    public class CameraMatchWidth : MonoBehaviour {
 
         // Set this to the in-world distance between the left & right edges of your scene.
         public float sceneWidth = 10;
