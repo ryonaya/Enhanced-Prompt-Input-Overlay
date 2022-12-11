@@ -1,0 +1,13 @@
+
+Architecture of code 
+
+Auto expansion of objects : 
+Panel
+    Group Holder        (OnGroupParentRemoved.cs)   -> Panel
+        Group Parent        
+            Group       (AutoExtendGroup.cs)        -> Group Parent, Group Holder
+                Node
+                Text    (TMPSizeSync.cs)            -> Node, Canvas Input
+                
+Canvas
+    Canvas Input        (CanvasTMPInput.cs)         -> Text

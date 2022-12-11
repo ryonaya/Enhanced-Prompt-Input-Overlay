@@ -4,6 +4,11 @@ using UnityEngine.UI;
 
 namespace Util
 {
+    /// <summary>
+    /// Attached to Group object.
+    /// Auto Expand Group layout in response to content changes.
+    /// Manages the group / group parent / group holder.
+    /// </summary>
     [RequireComponent(typeof(SpriteRenderer))]
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(ContentSizeFitter))]
@@ -11,24 +16,37 @@ namespace Util
     {
         private SpriteRenderer _spriteRenderer;
         private RectTransform _rectTransform;
-
+        private RectTransform _parentRectTransform;
+        private BoxCollider2D _parentCollider;
+        private VerticalLayoutGroup _groupLayoutGroup;
+        private RectTransform _groupHolderRectTransform;
+        
         protected override void Start()
         {
             base.Start();
+            
             _spriteRenderer = GetComponent<SpriteRenderer>();
             _rectTransform = GetComponent<RectTransform>();
+            
+            var groupParent = _rectTransform.parent;
+            _parentRectTransform = groupParent.GetComponent<RectTransform>();
+            _parentCollider = groupParent.GetComponent<BoxCollider2D>();
+            
+            var groupHolder = groupParent.parent;
+            _groupLayoutGroup = groupHolder.GetComponent<VerticalLayoutGroup>();
+            _groupHolderRectTransform = groupHolder.GetComponent<RectTransform>();
         }
 
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
-
-            // Hierarchy:
-            // Add More Node
+            
+            // More node added : 
             // -> Increase Group Height (this script)
             // -> Increase Group Parent Height
             // -> Increase Group Holder Height (ContentSizeFitter)
-            // -> Increase Panel Height 
+
+            if (!_rectTransform) return;
             
             // Change Group height 
             var rect = _rectTransform.rect;
@@ -36,24 +54,15 @@ namespace Util
             _spriteRenderer.size = rect.size;
 
             // Change Group Parent height and box collider Height
-            var groupParent = _rectTransform.parent;
-            var parentRectTransform = groupParent.GetComponent<RectTransform>();
-            var parentCollider = groupParent.GetComponent<BoxCollider2D>();
-            parentRectTransform.sizeDelta = rect.size;
-            parentCollider.size = rect.size;
+            _parentRectTransform.sizeDelta = rect.size;
+            _parentCollider.size = rect.size;
             
             // Change Group Holder height and position (ContentSizeFitter)
-            var groupHolder = groupParent.parent;
-            var groupLayoutGroup = groupHolder.GetComponent<VerticalLayoutGroup>();
-            var groupHolderRectTransform = groupHolder.GetComponent<RectTransform>();
-            var groupHolderRect = groupHolderRectTransform.rect;
-            groupLayoutGroup.CalculateLayoutInputVertical();
-            groupLayoutGroup.SetLayoutVertical();
-            groupHolderRectTransform.sizeDelta = new Vector2(groupHolderRect.width, groupHolderRect.height + deltaHeight);
-            groupHolderRectTransform.anchoredPosition = new Vector2(groupHolderRectTransform.anchoredPosition.x, (groupHolderRect.height + deltaHeight) * 0.5f);
-
-            // Change Panel rect/sprite height and position 
-            // This is handled by the OnGroupParentRemoved script
+            var groupHolderRect = _groupHolderRectTransform.rect;
+            _groupLayoutGroup.CalculateLayoutInputVertical();
+            _groupLayoutGroup.SetLayoutVertical();
+            _groupHolderRectTransform.sizeDelta = new Vector2(groupHolderRect.width, groupHolderRect.height + deltaHeight);
+            _groupHolderRectTransform.anchoredPosition = new Vector2(_groupHolderRectTransform.anchoredPosition.x, (groupHolderRect.height + deltaHeight) * 0.5f);
         }
     }
 }

@@ -4,6 +4,12 @@ using UnityEngine.EventSystems;
 
 namespace Util
 {
+    /// <summary>
+    /// Attached to Group Holder.
+    /// When Group Parent is removed or added,
+    /// Group holder will automatically grow/reduce in size.
+    /// Thus we need to modify the size/position of its parent (panel).
+    /// </summary>
     public class OnGroupParentRemoved : UIBehaviour
     {
         private RectTransform _rectTransform;

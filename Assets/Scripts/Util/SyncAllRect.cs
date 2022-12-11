@@ -1,9 +1,16 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Util
 {
+    /// <summary>
+    /// Attached to any objects with RectTransform.
+    /// Sync the size of SpriteRenderer/BoxCollider2D to the size of the RectTransform.
+    /// Since they aren't affected by ContentSizeFitter
+    /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(RectTransform))]
     public class SyncAllRect : UIBehaviour
