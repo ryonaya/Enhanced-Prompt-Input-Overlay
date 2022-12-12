@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace Util
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class MaintainPosition : MonoBehaviour
     {
         public SpriteRenderer panel;

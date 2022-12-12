@@ -29,11 +29,11 @@ namespace Util
             base.Start();
             
             _text = GetComponent<TMP_Text>();
+            _rectTransform = GetComponent<RectTransform>();
+            _fitter = GetComponent<ContentSizeFitter>();
             
             var node = transform.parent;
-            _rectTransform = GetComponent<RectTransform>();
             _nodeRectTransform = node.GetComponent<RectTransform>();
-            _fitter = GetComponent<ContentSizeFitter>();
             _nodeFitter = node.GetComponent<ContentSizeFitter>();
             _nodeLayout = node.GetComponent<HorizontalLayoutGroup>();
         }

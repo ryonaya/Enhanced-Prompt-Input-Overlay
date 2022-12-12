@@ -3,6 +3,9 @@ using UnityEngine.EventSystems;
 
 namespace Util
 {
+    /// <summary>
+    /// Handle single Node drag and drop
+    /// </summary>
     [RequireComponent(typeof(Collider))]
     [RequireComponent(typeof(EventTrigger))]
     public class NodeDragging : MonoBehaviour
@@ -11,19 +14,21 @@ namespace Util
         private Transform _parent;
         private Transform _transform;
         private RaycastHit2D[] _result;
-        // private bool _isDragging = false;
+        private AutoExtendGroup _groupScript;
+        private bool _proc = false;
     
         private void Start()
         {
             _main = Camera.main;
             _transform = transform;
             _parent = _transform.parent;
+            _groupScript = _parent.GetComponent<AutoExtendGroup>();
             _result = new RaycastHit2D[5];
         }
     
         public void OnBeginDrag()
         {
-            // _isDragging = true;
+            _proc = true;
             _parent = _transform.parent;
             _transform.SetParent(null);
         }
@@ -32,15 +37,21 @@ namespace Util
         {
             Vector3 mousePos = _main.ScreenToWorldPoint(Input.mousePosition - new Vector3(0.5f, 0.5f, 0));
             _transform.position = new Vector3(mousePos.x, mousePos.y, _transform.position.z);
+            
+            // Proc rect change
+            if (_groupScript && _proc)
+            {
+                _groupScript.Proc();
+                _proc = false;
+            }
         }
 
-    
         public void OnEndDrag()
         {
-            // _isDragging = false;
+            _proc = false;
         
-            // raycast from mouse position to find which Group Parent
-            // to attach onto (if not, then go back to original position)
+            // raycast from mouse position to find which Group to attach onto
+            // if didn't land on any Group, then go back to original position
             _transform.SetParent(_parent);
         
             Physics2D.RaycastNonAlloc(
@@ -54,15 +65,15 @@ namespace Util
             
                 if (hit.collider.CompareTag("Drag Target"))
                 {
-                    // child 0 is Group label, child 1 is the Group
-                    _transform.SetParent(hit.transform.GetChild(1));
+                    _transform.SetParent(hit.transform);
                     _parent = _transform.parent;
+                    _groupScript = _parent.GetComponent<AutoExtendGroup>();
+                    _groupScript.Proc();
                 }
                 else if (hit.collider.CompareTag("Trash Can"))
                 {
                     Destroy(gameObject);                
                 }
-            
             }
         }
     }

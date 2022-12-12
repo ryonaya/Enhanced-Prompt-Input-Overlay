@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.UI.Extensions;
 
 namespace Util
 {
     /// <summary>
     /// Attached to Group object.
-    /// Auto Expand Group layout in response to content changes.
+    /// Auto Expand Group layout in response to node adding/removing.
     /// Manages the group / group parent / group holder.
     /// </summary>
     [RequireComponent(typeof(SpriteRenderer))]
@@ -14,55 +15,75 @@ namespace Util
     [RequireComponent(typeof(ContentSizeFitter))]
     public class AutoExtendGroup : UIBehaviour
     {
-        private SpriteRenderer _spriteRenderer;
         private RectTransform _rectTransform;
+        private FlowLayoutGroup _layoutGroup;
+        private ContentSizeFitter _fitter;
+        
         private RectTransform _parentRectTransform;
-        private BoxCollider2D _parentCollider;
-        private VerticalLayoutGroup _groupLayoutGroup;
+        private HorizontalLayoutGroup _parentLayoutGroup;
+        private ContentSizeFitter _parentFitter;
+        
         private RectTransform _groupHolderRectTransform;
+        private VerticalLayoutGroup _groupLayoutGroup;
+        private ContentSizeFitter _groupFitter;
         
         protected override void Start()
         {
             base.Start();
-            
-            _spriteRenderer = GetComponent<SpriteRenderer>();
             _rectTransform = GetComponent<RectTransform>();
+            _layoutGroup = GetComponent<FlowLayoutGroup>();
+            _fitter = GetComponent<ContentSizeFitter>();
             
             var groupParent = _rectTransform.parent;
             _parentRectTransform = groupParent.GetComponent<RectTransform>();
-            _parentCollider = groupParent.GetComponent<BoxCollider2D>();
-            
+            // _parentLayoutGroup = groupParent.GetComponent<HorizontalLayoutGroup>();
+            // _parentFitter = groupParent.GetComponent<ContentSizeFitter>();
+
             var groupHolder = groupParent.parent;
-            _groupLayoutGroup = groupHolder.GetComponent<VerticalLayoutGroup>();
             _groupHolderRectTransform = groupHolder.GetComponent<RectTransform>();
+            _groupLayoutGroup = groupHolder.GetComponent<VerticalLayoutGroup>();
+            _groupFitter = groupHolder.GetComponent<ContentSizeFitter>();     
         }
 
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
             
+            if (!_rectTransform) return;
             // More node added : 
             // -> Increase Group Height (this script)
             // -> Increase Group Parent Height
             // -> Increase Group Holder Height (ContentSizeFitter)
 
-            if (!_rectTransform) return;
-            
             // Change Group height 
-            var rect = _rectTransform.rect;
-            var deltaHeight = rect.height - _spriteRenderer.size.y;
-            _spriteRenderer.size = rect.size;
+            _fitter.enabled = true;
+            _fitter.SetLayoutHorizontal();
+            _fitter.SetLayoutVertical();
+            _layoutGroup.CalculateLayoutInputHorizontal();
+            _layoutGroup.CalculateLayoutInputVertical();
+            _layoutGroup.SetLayoutHorizontal();
+            _layoutGroup.SetLayoutVertical();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_rectTransform);
+            _fitter.enabled = false;
 
-            // Change Group Parent height and box collider Height
-            _parentRectTransform.sizeDelta = rect.size;
-            _parentCollider.size = rect.size;
-            
+            // Change Group Parent height 
+            _parentRectTransform.sizeDelta = _rectTransform.sizeDelta;
+
             // Change Group Holder height and position (ContentSizeFitter)
-            var groupHolderRect = _groupHolderRectTransform.rect;
+            _groupFitter.enabled = true;
+            _groupFitter.SetLayoutHorizontal();
+            _groupFitter.SetLayoutVertical();
+            _groupLayoutGroup.CalculateLayoutInputHorizontal();
             _groupLayoutGroup.CalculateLayoutInputVertical();
+            _groupLayoutGroup.SetLayoutHorizontal();
             _groupLayoutGroup.SetLayoutVertical();
-            _groupHolderRectTransform.sizeDelta = new Vector2(groupHolderRect.width, groupHolderRect.height + deltaHeight);
-            _groupHolderRectTransform.anchoredPosition = new Vector2(_groupHolderRectTransform.anchoredPosition.x, (groupHolderRect.height + deltaHeight) * 0.5f);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_groupHolderRectTransform);
+            _groupFitter.enabled = false;
+        }
+
+        public void Proc()
+        {
+            OnRectTransformDimensionsChange();
         }
     }
 }

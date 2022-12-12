@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Util
 {
@@ -15,42 +16,61 @@ namespace Util
         private RectTransform _rectTransform;
         private float _preHeight;
         
+        private RectTransform _panelRectTransform;
+        private HorizontalLayoutGroup _panelLayoutGroup;
+        private ContentSizeFitter _panelFitter;
+        
+        private RectTransform _rootRectTransform;
+        private HorizontalLayoutGroup _rootLayoutGroup;
+        private ContentSizeFitter _rootFitter;
+        
+        
         protected override void Start()
         {
             base.Start();
             _rectTransform = GetComponent<RectTransform>();
             _preHeight = _rectTransform.rect.height;
+            
+            var panel = transform.parent;
+            _panelRectTransform = panel.GetComponent<RectTransform>();
+            _panelLayoutGroup = _panelRectTransform.GetComponent<HorizontalLayoutGroup>();
+            _panelFitter = _panelRectTransform.GetComponent<ContentSizeFitter>();
+
+            var root = panel.parent;
+            _rootRectTransform = root.GetComponent<RectTransform>();
+            _rootLayoutGroup = root.GetComponent<HorizontalLayoutGroup>();
+            _rootFitter = root.GetComponent<ContentSizeFitter>();
         }
 
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
 
-            var rect = _rectTransform.rect;
-            if (_preHeight == 0)    // Init
-            {
-                _preHeight = rect.height;
-                return;
-            }
-            var deltaHeight = rect.height - _preHeight;
-            _preHeight = rect.height;
-            if (deltaHeight == 0)   // No change
-            {
-                return;
-            }
+            if (!_rectTransform) return;
 
-            // Move this position
-            _rectTransform.anchoredPosition = new Vector2(_rectTransform.anchoredPosition.x, rect.height * 0.5f);
+            // Modify panel
+            _panelFitter.enabled = true;
+            _panelFitter.SetLayoutHorizontal();
+            _panelFitter.SetLayoutVertical();
+            _panelLayoutGroup.CalculateLayoutInputHorizontal();
+            _panelLayoutGroup.SetLayoutHorizontal();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_panelRectTransform);
+            _panelFitter.enabled = false;
             
-            // Modify panel's size
-            var panel = transform.parent;
-            var panelSpriteRenderer = panel.GetComponent<SpriteRenderer>();
-            var panelRectTransform = panel.GetComponent<RectTransform>();
-            var size = panelSpriteRenderer.size;
-            size = new Vector2(size.x, size.y + deltaHeight);
-            panelSpriteRenderer.size = size;
-            panelRectTransform.sizeDelta = size;
-            panelRectTransform.localPosition = new Vector2(panelRectTransform.localPosition.x, -size.y * 0.5f);
+            // Modify Root
+            _rootFitter.enabled = true;
+            _rootFitter.SetLayoutHorizontal();
+            _rootFitter.SetLayoutVertical();
+            _rootLayoutGroup.CalculateLayoutInputHorizontal();
+            _rootLayoutGroup.SetLayoutHorizontal();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_panelRectTransform);
+            _rootFitter.enabled = false;
+        }
+
+        // Force update 
+        public void Proc()
+        {
+            OnRectTransformDimensionsChange();
         }
     }
 }
