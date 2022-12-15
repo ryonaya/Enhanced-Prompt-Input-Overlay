@@ -40,6 +40,7 @@ namespace Util
             // _parentFitter = groupParent.GetComponent<ContentSizeFitter>();
 
             var groupHolder = groupParent.parent;
+            if (!groupHolder) return;
             _groupHolderRectTransform = groupHolder.GetComponent<RectTransform>();
             _groupLayoutGroup = groupHolder.GetComponent<VerticalLayoutGroup>();
             _groupFitter = groupHolder.GetComponent<ContentSizeFitter>();     

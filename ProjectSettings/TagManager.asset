@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Drag Target
   - Trash Can
+  - Panel
   layers:
   - Default
   - TransparentFX

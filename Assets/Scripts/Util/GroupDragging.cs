@@ -1,32 +1,32 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
+using Util;
 
 namespace Util
 {
     /// <summary>
-    /// Handle single Node drag and drop
+    /// Handle group dragging
     /// </summary>
     [RequireComponent(typeof(Collider))]
     [RequireComponent(typeof(EventTrigger))]
-    public class NodeDragging : MonoBehaviour
+    public class GroupDragging : MonoBehaviour
     {
         private Camera _main;
         private Transform _parent;
         private Transform _transform;
         private RaycastHit2D[] _result;
-        private AutoExtendGroup _groupScript;
+        private OnGroupParentRemoved _groupScript;
         private SpriteRenderer _spriteRenderer;
-        private HorizontalLayoutGroup _horizontalLayoutGroup;
-        private ContentSizeFitter _contentSizeFitter;
-        private RectTransform _rectTransform;
-        
+
         private BoxCollider2D _collider;
         private Vector2 _cursorOffset;
         private bool _validDrag;
 
         private bool _isClone = false;
         private GameObject _doppelganger;
+        
         
         private void Start()
         {
@@ -35,33 +35,21 @@ namespace Util
             _spriteRenderer = GetComponent<SpriteRenderer>();
             _result = new RaycastHit2D[10];
             _collider = GetComponent<BoxCollider2D>();
-            _horizontalLayoutGroup = GetComponentInParent<HorizontalLayoutGroup>();
-            _contentSizeFitter = GetComponentInParent<ContentSizeFitter>();
-            _rectTransform = GetComponent<RectTransform>();
             
-            _contentSizeFitter.enabled = true;
-            _contentSizeFitter.SetLayoutHorizontal();
-            _contentSizeFitter.SetLayoutVertical();
-            _horizontalLayoutGroup.CalculateLayoutInputHorizontal();
-            _horizontalLayoutGroup.SetLayoutHorizontal();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(_rectTransform);
-            _contentSizeFitter.enabled = false;
-
             _parent = _transform.parent;
             if (_parent)
-                _groupScript = _parent.GetComponent<AutoExtendGroup>();
+                _groupScript = _parent.GetComponent<OnGroupParentRemoved>();
         }
 
         public void OnBeginDrag()
         {
             if (_isClone) return;
-            
+
             if (_collider.OverlapPoint(_main.ScreenToWorldPoint(Input.mousePosition)))
                 _validDrag = true;
             else return;
             
             _parent = _transform.parent;
-            _groupScript = _parent.GetComponent<AutoExtendGroup>();
             _cursorOffset = _collider.offset;
 
             // Create a copy of this object, and move its collider right under the cursor
@@ -69,11 +57,11 @@ namespace Util
                 gameObject, _transform.position,
                 _transform.rotation, null
             );
-            var doppelgangerScript = _doppelganger.GetComponent<NodeDragging>();
+            var doppelgangerScript = _doppelganger.GetComponent<GroupDragging>();
             doppelgangerScript._isClone = true;
 
             // Dim the original
-            _spriteRenderer.color *= 0.5f;
+            _spriteRenderer.color = Color.black/2;
         }
 
         public void OnDrag()
@@ -89,7 +77,7 @@ namespace Util
         {
             if (_isClone || !_validDrag) return;
             Destroy(_doppelganger);
-            _spriteRenderer.color *= 2.0f;
+            _spriteRenderer.color = Color.black*0;
             
             // raycast from mouse position to find which Group to attach onto
             // if didn't land on any Group, then go back to original position
@@ -104,15 +92,11 @@ namespace Util
             {
                 if (!hit.collider) continue;
 
-                if (hit.collider.CompareTag("Drag Target"))
+                if (hit.collider.CompareTag("Panel"))
                 {
                     _transform.SetParent(hit.transform);
-                    
-                    // Proc both last parent and current parent
-                    if (_groupScript)   // Could be null if it is added by a button
-                        _groupScript.Proc();
                     _parent = _transform.parent;
-                    _groupScript = _parent.GetComponent<AutoExtendGroup>();
+                    _groupScript = _parent.GetComponent<OnGroupParentRemoved>();
                     _groupScript.Proc();
                 }
                 else if (hit.collider.CompareTag("Trash Can"))
