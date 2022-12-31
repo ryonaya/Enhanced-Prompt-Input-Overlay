@@ -35,6 +35,7 @@ namespace UnityEngine.UI.Extensions
 
         public int maxItems = int.MaxValue;
 
+        public string Type = "Group";
 
         [Header("UI Re-orderable Events")]
         public ReorderableListHandler OnElementDropped = new ReorderableListHandler();

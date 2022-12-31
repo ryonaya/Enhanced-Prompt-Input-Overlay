@@ -39,21 +39,28 @@ public class ButtonHandler : MonoBehaviour
     public void AddNode()
     {
         // Don't add node if there is already one
-        if (addNodeButtonRect.childCount > 1) return;
+        // if (addNodeButtonRect.childCount > 1) return;
         
-        GameObject newNode = Instantiate(node, Vector3.zero, Quaternion.identity, addNodeButtonRect);
-        newNode.transform.SetSiblingIndex(addNodeButtonRect.GetSiblingIndex());
+        // Attach node to the last group
+        Transform lastGroupHolder = groupHolderRect.GetChild(groupHolderRect.childCount - 1);
+        Transform lastGroup = lastGroupHolder.GetChild(1);
+        GameObject newNode = Instantiate(node, Vector3.zero, Quaternion.identity, lastGroup);
+        newNode.transform.SetSiblingIndex(lastGroup.GetSiblingIndex());
 
         // Re-calculates layout group
         StartCoroutine(AddNodeCoroutine(newNode));
+        
+        // Proc resize event
+        lastGroup.GetComponent<AutoExtendGroup>().Proc();
+        _onGroupParentRemoved.Proc();
     }
     
     private IEnumerator AddNodeCoroutine(GameObject newNode)
     {
-        yield return null;
+        yield return new WaitForEndOfFrame();
         
         // Trigger edit mode
-        newNode.GetComponentInChildren<TMPSizeSync>().OnSelect();
+        // newNode.GetComponentInChildren<TMPSizeSync>().OnSelect();
         
         // Re-calculates layout group to put new node next to the add node button
         _addNodeButtonLayout.CalculateLayoutInputHorizontal();
@@ -73,8 +80,8 @@ public class ButtonHandler : MonoBehaviour
         
         GameObject newGroup = Instantiate(group, Vector3.zero, Quaternion.identity, groupHolderRect);
         newGroup.transform.SetSiblingIndex(groupHolderRect.childCount);
+        newGroup.transform.GetChild(1).GetComponent<Image>().color = _colorPicker.color;
         newGroup.GetComponentInChildren<TMP_Text>().text = groupName;
-        newGroup.GetComponentInChildren<SpriteRenderer>().color = _colorPicker.color;
         
         _groupNameInput.text = "";
         addGroupInputs.SetActive(false);

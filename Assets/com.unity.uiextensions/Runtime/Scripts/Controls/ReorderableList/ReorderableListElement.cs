@@ -59,6 +59,9 @@ namespace UnityEngine.UI.Extensions
         private CanvasGroup _canvasGroup;
         internal bool isValid;
 
+        private BoxCollider2D _collider;
+        private Camera _main;
+        
 
         #region IBeginDragHandler Members
 
@@ -77,6 +80,15 @@ namespace UnityEngine.UI.Extensions
                 return;
             }
 
+            // 2022-12-19 modified
+            // only start dragging when dragging the element inside the collider
+            if (_collider && !_collider.OverlapPoint(_main.ScreenToWorldPoint(Input.mousePosition)))
+            {
+                _isDragging = false;
+                return;
+            }
+            
+            
             //If not CloneDraggedObject just set draggingObject to this gameobject
             if (_reorderableList.CloneDraggedObject == false)
             {
@@ -162,7 +174,12 @@ namespace UnityEngine.UI.Extensions
             Vector3 worldPoint;
             RectTransformUtility.ScreenPointToWorldPointInRectangle(canvas.GetComponent<RectTransform>(), eventData.position,
                 canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out worldPoint);
-            _draggingObject.position = worldPoint;
+            
+            // Custom offset
+            if (_collider)
+                _draggingObject.position = worldPoint-(Vector3)_collider.offset;
+            else 
+                _draggingObject.position = worldPoint;
 
             ReorderableList _oldReorderableListRaycasted = _currentReorderableListRaycasted;
 
@@ -171,7 +188,7 @@ namespace UnityEngine.UI.Extensions
             for (int i = 0; i < _raycastResults.Count; i++)
             {
                 _currentReorderableListRaycasted = _raycastResults[i].gameObject.GetComponent<ReorderableList>();
-                if (_currentReorderableListRaycasted != null)
+                if (_currentReorderableListRaycasted != null && _currentReorderableListRaycasted.Type == _reorderableList.Type)
                 {
                     break;
                 }
@@ -194,8 +211,9 @@ namespace UnityEngine.UI.Extensions
                 }
             }
             //Else find the best position on the list and put fake element on the right index 
-            else
+            else if (_currentReorderableListRaycasted.Type == _reorderableList.Type)    // 2022-12-31 Modified : only when the two type is the same
             {
+                
                 if (_currentReorderableListRaycasted.Content.childCount < _currentReorderableListRaycasted.maxItems && _fakeElement.parent != _currentReorderableListRaycasted.Content)
                 {
                     _fakeElement.SetParent(_currentReorderableListRaycasted.Content, false);
@@ -212,7 +230,8 @@ namespace UnityEngine.UI.Extensions
                         dist = Mathf.Abs(c.position.y - worldPoint.y);
                     else if (_currentReorderableListRaycasted.ContentLayout is HorizontalLayoutGroup)
                         dist = Mathf.Abs(c.position.x - worldPoint.x);
-                    else if (_currentReorderableListRaycasted.ContentLayout is GridLayoutGroup)
+                    else if (_currentReorderableListRaycasted.ContentLayout is GridLayoutGroup
+                             || _currentReorderableListRaycasted.ContentLayout is FlowLayoutGroup)
                         dist = (Mathf.Abs(c.position.x - worldPoint.x) + Mathf.Abs(c.position.y - worldPoint.y));
 
                     if (dist < minDistance)
@@ -369,7 +388,7 @@ namespace UnityEngine.UI.Extensions
             {
                 //If we have a ReorderableList that is dropable
                 //Put the dragged object into the content and at the right index
-                if (_currentReorderableListRaycasted != null && _fakeElement.parent == _currentReorderableListRaycasted.Content)
+                if (_currentReorderableListRaycasted != null && _fakeElement && _fakeElement.parent == _currentReorderableListRaycasted.Content)
                 {
                     var args = new ReorderableList.ReorderableListEventStruct
                     {
@@ -543,7 +562,9 @@ namespace UnityEngine.UI.Extensions
             _draggingObject.sizeDelta = size;
             _fakeElementLE.preferredHeight = _draggingObjectLE.preferredHeight = size.y;
             _fakeElementLE.preferredWidth = _draggingObjectLE.preferredWidth = size.x;
-            _fakeElement.GetComponent<RectTransform>().sizeDelta = size;
+            
+            if (_fakeElement)
+                _fakeElement.GetComponent<RectTransform>().sizeDelta = size;
         }
 
         public void Init(ReorderableList reorderableList)
@@ -551,6 +572,8 @@ namespace UnityEngine.UI.Extensions
             _reorderableList = reorderableList;
             _rect = GetComponent<RectTransform>();
             _canvasGroup = gameObject.GetOrAddComponent<CanvasGroup>();
+            _collider = gameObject.GetComponent<BoxCollider2D>();
+            _main = Camera.main;
         }
     }
 }

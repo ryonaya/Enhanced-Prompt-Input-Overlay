@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -13,8 +14,10 @@ namespace Util
     /// </summary>
     public class OnGroupParentRemoved : UIBehaviour
     {
+        
         private RectTransform _rectTransform;
-        private float _preHeight;
+        private VerticalLayoutGroup _layoutGroup;
+        private ContentSizeFitter _contentSizeFitter;
         
         private RectTransform _panelRectTransform;
         private HorizontalLayoutGroup _panelLayoutGroup;
@@ -29,7 +32,8 @@ namespace Util
         {
             base.Start();
             _rectTransform = GetComponent<RectTransform>();
-            _preHeight = _rectTransform.rect.height;
+            _layoutGroup = GetComponent<VerticalLayoutGroup>();
+            _contentSizeFitter = GetComponent<ContentSizeFitter>();
             
             var panel = transform.parent;
             _panelRectTransform = panel.GetComponent<RectTransform>();
@@ -48,12 +52,25 @@ namespace Util
 
             if (!_rectTransform) return;
 
+            // Modify this
+            _contentSizeFitter.enabled = true;
+            _contentSizeFitter.SetLayoutHorizontal();
+            _contentSizeFitter.SetLayoutVertical();
+            _layoutGroup.SetLayoutHorizontal();
+            _layoutGroup.SetLayoutVertical();
+            _layoutGroup.CalculateLayoutInputHorizontal();
+            _layoutGroup.CalculateLayoutInputVertical();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_rectTransform);
+            _contentSizeFitter.enabled = false;
+            
             // Modify panel
             _panelFitter.enabled = true;
             _panelFitter.SetLayoutHorizontal();
             _panelFitter.SetLayoutVertical();
             _panelLayoutGroup.CalculateLayoutInputHorizontal();
+            _panelLayoutGroup.CalculateLayoutInputVertical();
             _panelLayoutGroup.SetLayoutHorizontal();
+            _panelLayoutGroup.SetLayoutVertical();
             LayoutRebuilder.ForceRebuildLayoutImmediate(_panelRectTransform);
             _panelFitter.enabled = false;
             
@@ -62,7 +79,9 @@ namespace Util
             _rootFitter.SetLayoutHorizontal();
             _rootFitter.SetLayoutVertical();
             _rootLayoutGroup.CalculateLayoutInputHorizontal();
+            _rootLayoutGroup.CalculateLayoutInputVertical();
             _rootLayoutGroup.SetLayoutHorizontal();
+            _rootLayoutGroup.SetLayoutVertical();
             LayoutRebuilder.ForceRebuildLayoutImmediate(_panelRectTransform);
             _rootFitter.enabled = false;
         }
@@ -70,6 +89,13 @@ namespace Util
         // Force update 
         public void Proc()
         {
+            OnRectTransformDimensionsChange();
+            StartCoroutine(ProcSecond());
+        }
+        
+        IEnumerator ProcSecond()
+        {
+            yield return new WaitForEndOfFrame();
             OnRectTransformDimensionsChange();
         }
     }

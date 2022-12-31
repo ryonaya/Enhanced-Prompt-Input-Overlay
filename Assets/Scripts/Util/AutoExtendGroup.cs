@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -10,7 +11,6 @@ namespace Util
     /// Auto Expand Group layout in response to node adding/removing.
     /// Manages the group / group parent / group holder.
     /// </summary>
-    [RequireComponent(typeof(SpriteRenderer))]
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(ContentSizeFitter))]
     public class AutoExtendGroup : UIBehaviour
@@ -84,6 +84,13 @@ namespace Util
 
         public void Proc()
         {
+            OnRectTransformDimensionsChange(); 
+            StartCoroutine(ProcSecond());
+        }
+
+        IEnumerator ProcSecond()
+        {
+            yield return new WaitForEndOfFrame();
             OnRectTransformDimensionsChange();
         }
     }

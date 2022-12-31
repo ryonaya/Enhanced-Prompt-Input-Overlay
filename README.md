@@ -1,5 +1,5 @@
 # Enhanced-Prompt-Input-Overlay
-Better visualization for creating prompt for AI image generation.
+Visualization for creating prompt for text-to-image.
 
 ## This is a work in progress.
 
@@ -7,8 +7,14 @@ Better visualization for creating prompt for AI image generation.
 
 ## No, since I don't have a MAC.
 
-## Fk, I'll never do UI thing in World Space again
+## Fk, I'll never do Unity UI thing in World Space again
 
+#### TODo : 
+
+Add node cannot drag, since it's not a child of ReorderableList (re-work dragging script)
+
+Proc all layout group (re-work dragging script)
+(Also see how Unity UI Extentions handle this)
 
 Features : 
 - [x] Overlay
@@ -17,16 +23,21 @@ Features :
 - [x] Group creating/removing
 - [x]   naming/coloring
 - [x]   dragging/dragging without leaving the parent (to prevent order being messed up when dragging)
-- [ ] Previewing the location of dragged object
-- [ ] Multiple node/group selection/dragging
-- [ ] Shortcut keys (for faster editing)
+~~- [ ] Previewing the target location of dragged object~~
+- [X] Convert to UI workspace, using Unity UI Extentions
+~~- [ ] Multiple node/group selection/dragging~~
+- [ ] Export node to text
+- [ ] Import text to node
 - [ ] Proper UI layout (R's work)
 - [ ] Customizable Panel location
+- [ ] Shortcut keys (for faster editing)
 - [ ] Animation
 - [ ] Customizable UI layout (?)
 
 
 Devlog :
+- 2022-12-31: Full re-work done. Now using Unity UI Extentions. Also, no multiple selection/dragging, since it's not really needed.
+- 2022-12-19: Outline effect when dragging
 - 2022-12-16: Group/Node dragging and dragging without leaving parent
 - 2022-12-12: Group Creation and some code clean up
 - 2022-12-11: Move text edit to Canvas space, and finished text editing feature. Also Add node feature.
