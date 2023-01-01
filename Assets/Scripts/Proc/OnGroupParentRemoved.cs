@@ -1,10 +1,9 @@
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace Util
+namespace Proc
 {
     /// <summary>
     /// Attached to Group Holder.
@@ -90,7 +89,8 @@ namespace Util
         public void Proc()
         {
             OnRectTransformDimensionsChange();
-            StartCoroutine(ProcSecond());
+            if (gameObject.activeInHierarchy)
+                StartCoroutine(ProcSecond());
         }
         
         IEnumerator ProcSecond()

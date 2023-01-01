@@ -1,11 +1,11 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace Util
+namespace Proc
 {
     /// <summary>
     /// Attached to the TMP Input Field object.
@@ -27,6 +27,7 @@ namespace Util
         private TMP_InputField _inputField;
         private TMP_Text _text;
         private Transform _caret;
+        private bool _caretDragging = false;
         
         protected override void Start()
         {
@@ -90,12 +91,17 @@ namespace Util
             _nodeLayout.SetLayoutVertical();
             LayoutRebuilder.ForceRebuildLayoutImmediate(_nodeRectTransform);
             _nodeFitter.enabled = false;
+
+            Transform node = transform.parent;
+            Transform group = node.parent;
+            group.GetComponent<AutoExtendGroup>().Proc();
         }
 
         public void Proc()
         {
             MainProc();
-            StartCoroutine(ProcAgain());
+            if (gameObject.activeInHierarchy)
+                StartCoroutine(ProcAgain());
         }
 
         IEnumerator ProcAgain()
@@ -115,11 +121,36 @@ namespace Util
             _text.transform.localPosition = Vector3.zero;
             _caret.transform.localPosition = Vector3.zero;
         }
+
+        public void ResetTextPositionNow()
+        {
+            _text.transform.localPosition = Vector3.zero;
+            _caret.transform.localPosition = Vector3.zero;
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            StopAllCoroutines();
+        }
+
+        public void OnPointerDown()
+        {
+            _caretDragging = true;
+        }
         
-        // public void CopyText()
-        // {
-        //     _inputField.text = _text.text;
-        //     Proc();
-        // }
+        public void OnPointerUp()
+        {
+            _caretDragging = false;
+        }
+        
+        private void Update()
+        {
+            // The worst semi-solution to the problem of caret position
+            // it will still blinking when dragging
+            if (!_caretDragging) return;
+            _text.transform.localPosition = Vector3.zero;
+            _caret.transform.localPosition = Vector3.zero;
+        }
     }
 }

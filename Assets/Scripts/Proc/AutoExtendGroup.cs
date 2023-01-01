@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.UI.Extensions;
 
-namespace Util
+namespace Proc
 {
     /// <summary>
     /// Attached to Group object.
@@ -85,13 +85,20 @@ namespace Util
         public void Proc()
         {
             OnRectTransformDimensionsChange(); 
-            StartCoroutine(ProcSecond());
+            if (gameObject.activeInHierarchy)
+                StartCoroutine(ProcSecond());
         }
 
         IEnumerator ProcSecond()
         {
             yield return new WaitForEndOfFrame();
             OnRectTransformDimensionsChange();
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            StopAllCoroutines();
         }
     }
 }

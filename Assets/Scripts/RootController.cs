@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 
 namespace Util
@@ -6,7 +7,7 @@ namespace Util
     /// <summary>
     /// 
     /// </summary>
-    public class MaintainPosition : MonoBehaviour
+    public class RootController : MonoBehaviour
     {
         public SpriteRenderer panel;
         public float leftBorder;
@@ -23,15 +24,30 @@ namespace Util
 
         public void ToggleCollapse()
         {
-            if (collapsed)
+            if (collapsed)  // out
             {
                 transform.position += new Vector3(panel.bounds.size.x, 0, 0);
             }
-            else
+            else            // in and copy text
             {
                 transform.position -= new Vector3(panel.bounds.size.x, 0, 0);
+                GUIUtility.systemCopyBuffer = ExportText();
             }
             collapsed = !collapsed;
+        }
+
+        public String ExportText()
+        {
+            String text = "";
+
+            TMP_InputField[] inputFields = GetComponentsInChildren<TMP_InputField>();
+            for (int i=0; i<inputFields.Length; i++)
+            {
+                if (inputFields[i].text == "Enter text...") continue;
+                text += inputFields[i].text + ", ";
+            }
+
+            return text;
         }
     }
 }

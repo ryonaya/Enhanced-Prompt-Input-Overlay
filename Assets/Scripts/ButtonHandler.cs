@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Proc;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +13,6 @@ using Util;
 /// </summary>
 public class ButtonHandler : MonoBehaviour
 {
-    
     public RectTransform addNodeButtonRect;
     private HorizontalLayoutGroup _addNodeButtonLayout;
     public GameObject node;
@@ -22,71 +22,95 @@ public class ButtonHandler : MonoBehaviour
     private TMP_InputField _groupNameInput;
     private ColorPicker _colorPicker;
     public GameObject group;
-    
+    public BoxCollider2D addGroupCollider;
+
+    public TMP_InputField importText;
+
+    private Camera _main;
     private OnGroupParentRemoved _onGroupParentRemoved;
-    
+
     private void Start()
     {
         _addNodeButtonLayout = addNodeButtonRect.GetComponent<HorizontalLayoutGroup>();
         _groupNameInput = addGroupInputs.GetComponentInChildren<TMP_InputField>();
         _colorPicker = addGroupInputs.GetComponentInChildren<ColorPicker>();
-        _groupNameInput.onEndEdit.AddListener(AddGroup);
         addGroupInputs.SetActive(false);
+        importText.gameObject.SetActive(false);
         
+        _main = Camera.main;
+
         _onGroupParentRemoved = groupHolderRect.GetComponent<OnGroupParentRemoved>();
     }
 
-    public void AddNode()
+    #region Add Node
+    private GameObject AddNode(bool toProc = true)
     {
-        // Don't add node if there is already one
-        // if (addNodeButtonRect.childCount > 1) return;
+        // if no group, add group
+        if (groupHolderRect.childCount == 0)
+        {
+            AddGroup("Default");
+        }
         
         // Attach node to the last group
         Transform lastGroupHolder = groupHolderRect.GetChild(groupHolderRect.childCount - 1);
         Transform lastGroup = lastGroupHolder.GetChild(1);
         GameObject newNode = Instantiate(node, Vector3.zero, Quaternion.identity, lastGroup);
-        newNode.transform.SetSiblingIndex(lastGroup.GetSiblingIndex());
 
-        // Re-calculates layout group
-        StartCoroutine(AddNodeCoroutine(newNode));
-        
         // Proc resize event
-        lastGroup.GetComponent<AutoExtendGroup>().Proc();
-        _onGroupParentRemoved.Proc();
+        if (toProc)
+        {
+            lastGroup.GetComponent<AutoExtendGroup>().Proc();
+            _onGroupParentRemoved.Proc();
+        }
+        
+        return newNode;
     }
     
-    private IEnumerator AddNodeCoroutine(GameObject newNode)
+    public void AddNodeButton()
     {
-        yield return new WaitForEndOfFrame();
-        
-        // Trigger edit mode
-        // newNode.GetComponentInChildren<TMPSizeSync>().OnSelect();
-        
-        // Re-calculates layout group to put new node next to the add node button
-        _addNodeButtonLayout.CalculateLayoutInputHorizontal();
-        _addNodeButtonLayout.SetLayoutHorizontal();
+        // For Button, since it can't pass parameter or return value
+        AddNode();
     }
-    
-    public void OpenAddGroupInputs()
+    #endregion
+
+    #region Add Group
+    public void ToggleAddGroupInputs()
     {
-        addGroupInputs.SetActive(true);
-        _groupNameInput.Select();
+        if (!addGroupCollider || !addGroupCollider.OverlapPoint(_main.ScreenToWorldPoint(Input.mousePosition)))
+            return;
+        
+        if (addGroupInputs.activeSelf)
+        {
+            addGroupInputs.SetActive(false);
+        }
+        else
+        {
+            addGroupInputs.SetActive(true);
+            _groupNameInput.Select();
+        }
     }
 
     // OnEndEdit
     private void AddGroup(string groupName)
     {
         if (string.IsNullOrEmpty(groupName)) return;
-        
+
         GameObject newGroup = Instantiate(group, Vector3.zero, Quaternion.identity, groupHolderRect);
         newGroup.transform.SetSiblingIndex(groupHolderRect.childCount);
         newGroup.transform.GetChild(1).GetComponent<Image>().color = _colorPicker.color;
         newGroup.GetComponentInChildren<TMP_Text>().text = groupName;
-        
+
         _groupNameInput.text = "";
         addGroupInputs.SetActive(false);
 
         StartCoroutine(ProcNextFrame());
+    }
+
+    public void AddGroupButton()
+    {
+        // For Button, since it can't pass parameter or return value
+        if (string.IsNullOrEmpty(_groupNameInput.text)) return;
+        AddGroup(_groupNameInput.text);
     }
     
     private IEnumerator ProcNextFrame()
@@ -94,4 +118,43 @@ public class ButtonHandler : MonoBehaviour
         yield return new WaitForFixedUpdate();
         _onGroupParentRemoved.Proc();
     }
+    #endregion
+    
+    #region Import text to Node
+    public void OpenImportText()
+    {
+        importText.gameObject.SetActive(true);
+        importText.Select();
+    }
+    
+    public void ImportTextToNode()
+    {
+        if (string.IsNullOrEmpty(importText.text))
+        {
+            importText.gameObject.SetActive(false);
+            return;
+        }
+        String[] words = importText.text.Split(',');
+        List<String> targets = new List<string>();
+        foreach (string word in words)
+        {
+            String trimmed = word.Trim();
+            if (trimmed.Length > 0)
+            {
+                targets.Add(trimmed);
+            }
+        }
+
+        for (int i=0; i<targets.Count-1; i++)
+        {
+            GameObject newNode = AddNode(false);
+            newNode.GetComponentInChildren<TMP_InputField>().text = targets[i];
+        }
+        GameObject lastNewNode = AddNode(true);
+        lastNewNode.GetComponentInChildren<TMP_InputField>().text = targets[targets.Count-1];
+        
+        importText.text = "";
+        importText.gameObject.SetActive(false);
+    }
+    #endregion
 }
